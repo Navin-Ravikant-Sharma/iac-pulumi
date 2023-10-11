@@ -14,11 +14,12 @@ const myvpc = new aws.ec2.Vpc("iacVPC", {
 
 // creating subnet 
 
-// Create public subnets in different availability zones
+// Create public subnets
 const publicSubnets = [];
 const available = aws.getAvailabilityZones({
     state: "available",
 });
+
 for (let i = 0; i < 3; i++) {
     const subnet = new aws.ec2.Subnet(`publicSubnet${i}`, {
         vpcId: myvpc.id,
@@ -29,7 +30,7 @@ for (let i = 0; i < 3; i++) {
     publicSubnets.push(subnet);
 }
 
-// Create private subnets in different availability zones
+// Create private subnets
 const privateSubnets = [];
 for (let i = 0; i < 3; i++) {
     const subnet = new aws.ec2.Subnet(`privateSubnet${i}`, {
@@ -42,9 +43,35 @@ for (let i = 0; i < 3; i++) {
 
 //creating internet gateway
 
-const gw = new aws.ec2.InternetGateway("internetGateway", {
+const internet = new aws.ec2.InternetGateway("internetGateway", {
     vpcId: myvpc.id,
     tags: {
-        Name: "iacVPC",
+        Name: "iacVPC gateway",
     },
+});
+
+// Create a public route table
+const pubRouteTable = new aws.ec2.RouteTable("pubRouteTable", {
+    vpcId: myvpc.id,
+});
+
+// Attach all public subnets to the public route table
+publicSubnets.forEach((subnet, index) => {
+    const routeTable = new aws.ec2.RouteTableAssociation(`pubRoute${index}`, {
+        routeTableId: pubRouteTable.id,
+        subnetId: subnet.id,
+    });
+});
+
+// Create a private route table
+const privRouteTable = new aws.ec2.RouteTable("privRouteTable", {
+    vpcId: myvpc.id,
+});
+
+// Attach all private subnets to the private route table
+privateSubnets.forEach((subnet, index) => {
+    const routeTable = new aws.ec2.RouteTableAssociation(`privRoute${index}`, {
+        routeTableId: privRouteTable.id,
+        subnetId: subnet.id,
+    });
 });
