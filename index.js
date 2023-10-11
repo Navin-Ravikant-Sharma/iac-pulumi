@@ -75,3 +75,9 @@ privateSubnets.forEach((subnet, index) => {
         subnetId: subnet.id,
     });
 });
+
+const publicRoute = new aws.ec2.Route("pubRoute", {
+    routeTableId: pubRouteTable.id,
+    destinationCidrBlock: process.env.destination_cidr,
+    gatewayId: internet.id,
+});
