@@ -39,3 +39,12 @@ for (let i = 0; i < 3; i++) {
     });
     privateSubnets.push(subnet);
 }
+
+//creating internet gateway
+
+const gw = new aws.ec2.InternetGateway("internetGateway", {
+    vpcId: myvpc.id,
+    tags: {
+        Name: "iacVPC",
+    },
+});
