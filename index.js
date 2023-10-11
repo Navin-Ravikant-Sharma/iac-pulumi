@@ -1,10 +1,10 @@
-"use strict";
-const pulumi = require("@pulumi/pulumi");
-const aws = require("@pulumi/aws");
-const awsx = require("@pulumi/awsx");
+import * as pulumi from "@pulumi/pulumi";
+import * as aws from "@pulumi/aws";
 
-// Create an AWS resource (S3 Bucket)
-const bucket = new aws.s3.Bucket("my-bucket");
-
-// Export the name of the bucket
-exports.bucketName = bucket.id;
+//creating VPC
+const main = new aws.ec2.Vpc("iacVPC", {
+    cidrBlock: "10.0.0.0/16",
+    tags: {
+        Name: "iacVPC",
+    },
+});
