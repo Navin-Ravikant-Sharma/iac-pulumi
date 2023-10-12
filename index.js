@@ -10,7 +10,7 @@ const config = yaml.safeLoad(configFile);
 const myvpc = new aws.ec2.Vpc("iacVPC", {
     cidrBlock: config.config.env.cidrBlock,
     tags: {
-        Name: "iacVPC",
+        Name: config.tags.iacVPC,
     },
 });
 
@@ -26,7 +26,7 @@ const available = aws.getAvailabilityZones({
 available.then(available => {
     const zoneCount = available.names?.length || 0;
 
-    for (let i = 0; i < zoneCount; i++) {
+    for (let i = 0; i < zoneCount && i < 3; i++) {
         // Create public subnets
         const pubsubnet = new aws.ec2.Subnet(`publicSubnet${i}`, {
             vpcId: myvpc.id,
@@ -34,7 +34,7 @@ available.then(available => {
             cidrBlock: pulumi.interpolate`10.0.${i}.0/24`,
             mapPublicIpOnLaunch: true,
             tags: {
-                Name: "public subnet",
+                Name: config.tags.publicSubnet,
             },
         });
         publicSubnets.push(pubsubnet);
@@ -45,7 +45,7 @@ available.then(available => {
             availabilityZone: available.names?.[i],
             cidrBlock: pulumi.interpolate`10.0.${i + 10}.0/24`,
             tags: {
-                Name: "private subnet",
+                Name: config.tags.privateSubnet,
             },
         });
         privateSubnets.push(privsubnet);
@@ -55,7 +55,7 @@ available.then(available => {
     const internet = new aws.ec2.InternetGateway("internetGateway", {
         vpcId: myvpc.id,
         tags: {
-            Name: "iacVPC gateway",
+            Name: config.tags.internetGateway,
         },
     });
 
@@ -63,7 +63,7 @@ available.then(available => {
     const pubRouteTable = new aws.ec2.RouteTable("pubRouteTable", {
         vpcId: myvpc.id,
         tags: {
-            Name: "public route table",
+            Name: config.tags.publicRouteTable,
         },
     });
 
@@ -79,7 +79,7 @@ available.then(available => {
     const privRouteTable = new aws.ec2.RouteTable("privRouteTable", {
         vpcId: myvpc.id,
         tags: {
-            Name: "private route table",
+            Name: config.tags.privateRouteTable,
         },
     });
 
@@ -96,7 +96,7 @@ available.then(available => {
         destinationCidrBlock: config.config.env.destination_cidr,
         gatewayId: internet.id,
         tags: {
-            Name: "public route for destination",
+            Name: config.tags.publicRoute,
         },
     });
 });
