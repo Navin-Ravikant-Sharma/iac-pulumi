@@ -6,32 +6,32 @@ Configuration creates set of VPC resources in Dev and Demo environment.
 
 ## STEPS TO RUN PULUMI
 
-$ pulumi new aws-javascript
-$ npm i
-$ pulumi up
-$ pulumi down
+1. $ pulumi new aws-javascript
+2. $ npm i
+3. $ pulumi up
+4. $ pulumi down
 
 ## REQUIREMENTS  
 
-pulumi >= 3.88.0
-aws >= 5.42.0
+1. pulumi >= 3.88.0
+2. aws >= 5.42.0
 
 ## MODULES
 
-vpc_cidr_block
-vpc_name
-vpc_internet_gateway_name
-vpc_public_subnet_name
-vpc_public_route_name
+1. vpc_cidr_block
+2. vpc_name
+3. vpc_internet_gateway_name
+4. vpc_public_subnet_name
+5. vpc_public_route_name
 
 
 ## RESOURCES 
 
-aws_vpc
-aws_internet_gateway
-aws_subnet
-aws_route_table
-aws_route_table_association
+1. aws_vpc
+2. aws_internet_gateway
+3. aws_subnet
+4. aws_route_table
+5. aws_route_table_association
 
 
 ## AWS Custom VPC Creation steps:
