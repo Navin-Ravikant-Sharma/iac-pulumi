@@ -9,9 +9,9 @@ const config = yaml.safeLoad(configFile);
 
 // Creating VPC
 const myvpc = new aws.ec2.Vpc("iacVPC", {
-    cidrBlock: config.config.env.cidrBlock,
+    cidrBlock: config.config['iacpulumi:cidrBlock'],
     tags: {
-        Name: config.tags.iacVPC,
+        Name: "MyVPC",
     },
 });
 
@@ -35,7 +35,7 @@ available.then(available => {
             cidrBlock: pulumi.interpolate`10.0.${i}.0/24`,
             mapPublicIpOnLaunch: true,
             tags: {
-                Name: config.tags.publicSubnet,
+                Name: "Public Subnet",
             },
         });
         publicSubnets.push(pubsubnet);
@@ -46,7 +46,7 @@ available.then(available => {
             availabilityZone: available.names?.[i],
             cidrBlock: pulumi.interpolate`10.0.${i + 10}.0/24`,
             tags: {
-                Name: config.tags.privateSubnet,
+                Name: "Private Subnet",
             },
         });
         privateSubnets.push(privsubnet);
@@ -56,7 +56,7 @@ available.then(available => {
     const internet = new aws.ec2.InternetGateway("internetGateway", {
         vpcId: myvpc.id,
         tags: {
-            Name: config.tags.internetGateway,
+            Name: "Internet Gateway",
         },
     });
 
@@ -64,7 +64,7 @@ available.then(available => {
     const pubRouteTable = new aws.ec2.RouteTable("pubRouteTable", {
         vpcId: myvpc.id,
         tags: {
-            Name: config.tags.publicRouteTable,
+            Name: "Public Route Table",
         },
     });
 
@@ -80,7 +80,7 @@ available.then(available => {
     const privRouteTable = new aws.ec2.RouteTable("privRouteTable", {
         vpcId: myvpc.id,
         tags: {
-            Name: config.tags.privateRouteTable,
+            Name: "Private Route Table",
         },
     });
 
@@ -94,10 +94,10 @@ available.then(available => {
 
     const publicRoute = new aws.ec2.Route("pubRoute", {
         routeTableId: pubRouteTable.id,
-        destinationCidrBlock: config.config.env.destination_cidr,
+        destinationCidrBlock: config.config['iacpulumi:destination_cidr'],
         gatewayId: internet.id,
         tags: {
-            Name: config.tags.publicRoute,
+            Name: "Public Route for Destination",
         },
     });
 });
