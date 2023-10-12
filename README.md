@@ -36,15 +36,15 @@ aws_route_table_association
 
 ## AWS Custom VPC Creation steps:
 
-•	Set the required region 
-•	Create Virtual Private Cloud (VPC).
-•	Create Internet Gateway
-•	Attach Internet gateway to the VPC.
-•	Create Public Subnets
-•	Create Public route table
-•	Add public route to the public route table
-•	Associate the Public subnets with the Public Route table
-•	Create the Private subnets
-•	Create Private Route table 
-•	Add public route to the public route table
-•	Associate the Private Subnets with the Private Route table
+1. Set the required region.
+2. Create Virtual Private Cloud (VPC).
+3. Create Internet Gateway.
+4. Attach Internet gateway to the VPC.
+5. Create Public Subnets.
+6. Create Public route table.
+7. Add public route to the public route table.
+8. Associate the Public subnets with the Public Route table.
+9. Create the Private subnets.
+10. Create Private Route table.
+11. Add public route to the public route table.
+12. Associate the Private Subnets with the Private Route table.
