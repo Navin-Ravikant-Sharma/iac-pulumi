@@ -1,12 +1,14 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
-import env from 'dotenv';
+import yaml from "js-yaml";
+import * as fs from "fs";
 
-env.config();
+const configFile = fs.readFileSync('pulumi.dev.yaml', 'utf8');
+const config = yaml.safeLoad(configFile);
 
 // Creating VPC
 const myvpc = new aws.ec2.Vpc("iacVPC", {
-    cidrBlock: process.env.cidrBlock,
+    cidrBlock: config.config.env.cidrBlock,
     tags: {
         Name: "iacVPC",
     },
@@ -91,7 +93,7 @@ available.then(available => {
 
     const publicRoute = new aws.ec2.Route("pubRoute", {
         routeTableId: pubRouteTable.id,
-        destinationCidrBlock: process.env.destination_cidr,
+        destinationCidrBlock: config.config.env.destination_cidr,
         gatewayId: internet.id,
         tags: {
             Name: "public route for destination",

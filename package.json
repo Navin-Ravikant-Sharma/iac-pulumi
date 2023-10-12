@@ -1,5 +1,5 @@
 {
-    "name": "iac-pulumi-assignment",
+    "name": "iacpulumi",
     "main": "index.js",
     "type": "module",
     "dependencies": {

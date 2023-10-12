@@ -131,3 +131,5 @@ dist
 
 #########
 .DS_Store
+Pulumi.dev.yaml
+Pulumi.yaml
