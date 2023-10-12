@@ -24,7 +24,6 @@ Configuration creates set of VPC resources in Dev and Demo environment.
 4. vpc_public_subnet_name
 5. vpc_public_route_name
 
-
 ## RESOURCES 
 
 1. aws_vpc
@@ -32,7 +31,6 @@ Configuration creates set of VPC resources in Dev and Demo environment.
 3. aws_subnet
 4. aws_route_table
 5. aws_route_table_association
-
 
 ## AWS Custom VPC Creation steps:
 
