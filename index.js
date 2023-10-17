@@ -24,15 +24,18 @@ const available = aws.getAvailabilityZones({
     state: config.config['iacpulumi:state'],
 });
 
+const array = config.config['iacpulumi:cidrBlockSubnet'].split(".");
+
 available.then(available => {
     const zoneCount = available.names?.length || 0;
 
     for (let i = 0; i < zoneCount && i < config.config['iacpulumi:max_count']; i++) {
         // Create public subnets
+        const SubnetPublicCidr = array[0] + "." + array[1] + "." + i + "." + array[3];
         const pubsubnet = new aws.ec2.Subnet(config.config['iacpulumi:publicSubnet']+`${i}`, {
             vpcId: myvpc.id,
             availabilityZone: available.names?.[i],
-            cidrBlock: pulumi.interpolate`10.0.${i}.0/24`,
+            cidrBlock: SubnetPublicCidr,
             mapPublicIpOnLaunch: true,
             tags: {
                 Name: config.config['iacpulumi:publicSubnet'],
@@ -41,10 +44,12 @@ available.then(available => {
         publicSubnets.push(pubsubnet);
 
         // Create private subnets
+        const ipTotal = i + config.config['iacpulumi:max_count'];
+        const SubnetPrivateCidr = array[0] + "." + array[1] + "." + ipTotal + "." + array[3];
         const privsubnet = new aws.ec2.Subnet(config.config['iacpulumi:privateSubnet']+`${i}`, {
             vpcId: myvpc.id,
             availabilityZone: available.names?.[i],
-            cidrBlock: pulumi.interpolate`10.0.${i + 10}.0/24`,
+            cidrBlock: SubnetPrivateCidr,
             tags: {
                 Name: config.config['iacpulumi:privateSubnet'],
             },
