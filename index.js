@@ -29,7 +29,7 @@ available.then(available => {
 
     for (let i = 0; i < zoneCount && i < config.config['iacpulumi:max_count']; i++) {
         // Create public subnets
-        const pubsubnet = new aws.ec2.Subnet(config.config['iacpulumi:publicSubnet']`${i}`, {
+        const pubsubnet = new aws.ec2.Subnet(config.config['iacpulumi:publicSubnet']+`${i}`, {
             vpcId: myvpc.id,
             availabilityZone: available.names?.[i],
             cidrBlock: pulumi.interpolate`10.0.${i}.0/24`,
@@ -41,7 +41,7 @@ available.then(available => {
         publicSubnets.push(pubsubnet);
 
         // Create private subnets
-        const privsubnet = new aws.ec2.Subnet(config.config['iacpulumi:privateSubnet']`${i}`, {
+        const privsubnet = new aws.ec2.Subnet(config.config['iacpulumi:privateSubnet']+`${i}`, {
             vpcId: myvpc.id,
             availabilityZone: available.names?.[i],
             cidrBlock: pulumi.interpolate`10.0.${i + 10}.0/24`,
@@ -70,7 +70,7 @@ available.then(available => {
 
     // Attach all public subnets to the public route table
     publicSubnets.forEach((subnet, index) => {
-        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:publicRoute']`${index}`, {
+        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:publicRoute']+`${index}`, {
             routeTableId: pubRouteTable.id,
             subnetId: subnet.id,
         });
@@ -86,7 +86,7 @@ available.then(available => {
 
     // Attach all private subnets to the private route table
     privateSubnets.forEach((subnet, index) => {
-        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:privateRoute']`${index}`, {
+        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:privateRoute']+`${index}`, {
             routeTableId: privRouteTable.id,
             subnetId: subnet.id,
         });
@@ -122,7 +122,7 @@ available.then(available => {
                 protocol: config.config['iacpulumi:Protocol'],
                 fromPort: config.config['iacpulumi:SSHPort'],
                 toPort: config.config['iacpulumi:SSHPort'],
-                cidrBlocks: config.config['iacpulumi:SSHip'],
+                cidrBlocks: [config.config['iacpulumi:SSHip']],
             },
         ],
         tags: {
