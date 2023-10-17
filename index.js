@@ -4,6 +4,7 @@ import yaml from "js-yaml";
 import * as fs from "fs";
 
 const stackName = pulumi.getStack();
+console.log("stack", stackName);
 const configFile = fs.readFileSync(`pulumi.${stackName}.yaml`, 'utf8');
 const config = yaml.safeLoad(configFile);
 
@@ -100,4 +101,64 @@ available.then(available => {
             Name: "Public Route for Destination",
         },
     });
+
+    const securityGroup = new aws.ec2.SecurityGroup("SecurityGroup", {
+        vpcId: myvpc.id,
+        ingress: [
+            {
+                protocol: "tcp",
+                fromPort: 80,
+                toPort: 80,
+                cidrBlocks: ["0.0.0.0/0"],
+                ipv6_cidr_blocks: ["::/0"],
+            },
+            {
+                protocol: "tcp",
+                fromPort: 443,
+                toPort: 443,
+                cidrBlocks: ["0.0.0.0/0"],
+                ipv6_cidr_blocks: ["::/0"],
+            },
+            {
+                protocol: "tcp",
+                fromPort: 22,
+                toPort: 22,
+                cidrBlocks: ["10.0.0.41/32"],
+            },
+        ],
+        tags: {
+            Name: "iac_Security_Group",
+        }
+    });
+
+    const ami = aws.ec2.getAmi({
+        filters: [
+            {
+                name: "name",
+                values: ["csye6225_iac_and_webapp_ami"],
+            },
+            {
+                name: "root-device-type",
+                values: ["ebs"],
+            },
+            {
+                name: "virtualization-type",
+                values: ["hvm"],
+            },
+        ],
+        mostRecent: true,
+        owners: ["412145925921"],
+    });
+
+    const instance = new aws.ec2.Instance("iac_Instance", {
+        ami: ami.then(i => i.id),
+        instanceType: "t2.micro",
+        subnetId: publicSubnets[0],
+        keyName: "pulumiKey",
+        associatePublicIpAddress: true,
+        vpcSecurityGroupIds: [
+            securityGroup.id,
+        ]
+    });
+
 });
