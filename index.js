@@ -118,6 +118,13 @@ available.then(available => {
             },
             {
                 protocol: config.config['iacpulumi:Protocol'],
+                fromPort: config.config['iacpulumi:webapp_Port'],
+                toPort: config.config['iacpulumi:webapp_Port'],
+                cidrBlocks: [config.config['iacpulumi:ipv4']],
+                ipv6_cidr_blocks: [config.config['iacpulumi:ipv6']],
+            },
+            {
+                protocol: config.config['iacpulumi:Protocol'],
                 fromPort: config.config['iacpulumi:HTTPS_Port'],
                 toPort: config.config['iacpulumi:HTTPS_Port'],
                 cidrBlocks: [config.config['iacpulumi:ipv4']],
@@ -134,6 +141,65 @@ available.then(available => {
             Name: config.config['iacpulumi:SecurityGroup'],
         }
     });
+
+    const securityGroupRDS = new aws.ec2.SecurityGroup(config.config['iacpulumi:RDSSecurityGroup'], {
+        vpcId: myvpc.id,
+        ingress: [
+            {
+                protocol: config.config['iacpulumi:Protocol'],
+                fromPort: config.config['iacpulumi:MySQL_Port'],
+                toPort: config.config['iacpulumi:MySQL_Port'],
+                security_groups: [securityGroup.id],
+            },
+        ],
+        egress: [
+            {
+                protocol: config.config['iacpulumi:RestrictedProtocol'],
+                fromPort: config.config['iacpulumi:Restricted_Port'],
+                toPort: config.config['iacpulumi:Restricted_Port'],
+                security_groups: [securityGroup.id],
+                cidrBlocks: [config.config['iacpulumi:destination_cidr']],
+            },
+        ],
+        tags: {
+            Name: config.config['iacpulumi:RDSSecurityGroup'],
+        }
+    });
+
+    const rds_parameter = new aws.rds.ParameterGroup(config.config['iacpulumi:parameterGrouptName'], {
+        family: config.config['iacpulumi:parameterGrouptName'],
+        vpcId: myvpc.id,
+        parameters: [{
+            name: config.config['iacpulumi:parameterGroupParameterName'],
+            value: config.config['iacpulumi:parameterGroupParameterValue']
+        }]
+    });
+
+    const privateSubnetID = privateSubnets.map(subnet => subnet.id);
+
+    const privateSubnetGroup = new aws.rds.SubnetGroup(config.config['iacpulumi:subnetGroup'], {
+        subnetIds: privateSubnetID,
+        tags: {
+            Name: config.config['iacpulumi:privateSubnetGroup'],
+        },
+    });
+
+    const RDS_Instance = new aws.rds.Instance(config.config['iacpulumi:rdsInstance'], {
+        allocatedStorage: config.config['iacpulumi:allocatedStorage'],
+        storageType: config.config['iacpulumi:storageType'],
+        engine: config.config['iacpulumi:engine'],
+        engineVersion: config.config['iacpulumi:engineVersion'],
+        skipFinalSnapshot: config.config['iacpulumi:skipFinalSnapshot'],
+        instanceClass: config.config['iacpulumi:instanceClass'],
+        multiAz: config.config['iacpulumi:multiAz'],
+        dbName: config.config['iacpulumi:dbName'],
+        username: config.config['iacpulumi:username'],
+        password: config.config['iacpulumi:password'],
+        parameterGroupName: rds_parameter.name,
+        dbSubnetGroupName: privateSubnetGroup,
+        vpcSecurityGroupIds: [securityGroupRDS.id, securityGroup.id],
+        publiclyAccessible: config.config['iacpulumi:publiclyAccessible'],
+    })
 
     const ami = aws.ec2.getAmi({
         filters: [
@@ -154,15 +220,25 @@ available.then(available => {
         owners: [config.config['iacpulumi:owner']],
     });
 
-    const instance = new aws.ec2.Instance(config.config['iacpulumi:instanceTag'], {
-        ami: ami.then(i => i.id),
-        instanceType: config.config['iacpulumi:instanceType'],
-        subnetId: publicSubnets[0],
-        keyName: config.config['iacpulumi:keyValue'],
-        associatePublicIpAddress: true,
-        vpcSecurityGroupIds: [
-            securityGroup.id,
-        ]
+    RDS_Instance.endpoint.apply(endpoint => {
+        const instance = new aws.ec2.Instance(config.config['iacpulumi:instanceTag'], {
+            ami: ami.then(i => i.id),
+            instanceType: config.config['iacpulumi:instanceType'],
+            subnetId: publicSubnets[0],
+            keyName: config.config['iacpulumi:keyValue'],
+            associatePublicIpAddress: config.config['iacpulumi:associatePublicIpAddress'],
+            vpcSecurityGroupIds: [
+                securityGroup.id,
+                securityGroupRDS.id,
+            ],
+            userData: pulumi.interpolate`#!/bin/bash
+                echo "host=${endpoint}" >> /home/admin/opt/webapp/.env
+                echo "user=${config.config['iacpulumi:user']}" >> /home/admin/opt/webapp/.env
+                echo "pd=${config.config['iacpulumi:pd']}" >> /home/admin/opt/webapp/.env
+                echo "port=${config.config['iacpulumi:port']}" >> /home/admin/opt/webapp/.env
+                echo "dialect=${config.config['iacpulumi:dialect']}" >> /home/admin/opt/webapp/.env
+                echo "database=${config.config['iacpulumi:database']}" >> /home/admin/opt/webapp/.env
+            `,
+        });
     });
-
 });
