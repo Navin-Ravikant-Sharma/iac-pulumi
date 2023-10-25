@@ -167,7 +167,7 @@ available.then(available => {
     });
 
     const rds_parameter = new aws.rds.ParameterGroup(config.config['iacpulumi:parameterGrouptName'], {
-        family: config.config['iacpulumi:parameterGrouptName'],
+        family: config.config['iacpulumi:parameterGroupFamily'],
         vpcId: myvpc.id,
         parameters: [{
             name: config.config['iacpulumi:parameterGroupParameterName'],
@@ -220,6 +220,8 @@ available.then(available => {
         owners: [config.config['iacpulumi:owner']],
     });
 
+    const env_file = config.config['iacpulumi:envfile'];
+
     RDS_Instance.endpoint.apply(endpoint => {
         const instance = new aws.ec2.Instance(config.config['iacpulumi:instanceTag'], {
             ami: ami.then(i => i.id),
@@ -232,12 +234,12 @@ available.then(available => {
                 securityGroupRDS.id,
             ],
             userData: pulumi.interpolate`#!/bin/bash
-                echo "host=${endpoint}" >> /home/admin/opt/webapp/.env
-                echo "user=${config.config['iacpulumi:user']}" >> /home/admin/opt/webapp/.env
-                echo "pd=${config.config['iacpulumi:pd']}" >> /home/admin/opt/webapp/.env
-                echo "port=${config.config['iacpulumi:port']}" >> /home/admin/opt/webapp/.env
-                echo "dialect=${config.config['iacpulumi:dialect']}" >> /home/admin/opt/webapp/.env
-                echo "database=${config.config['iacpulumi:database']}" >> /home/admin/opt/webapp/.env
+                echo "host=${endpoint}" >> ${env_file}
+                echo "user=${config.config['iacpulumi:user']}" >> ${env_file}
+                echo "pd=${config.config['iacpulumi:pd']}" >> ${env_file}
+                echo "port=${config.config['iacpulumi:port']}" >> ${env_file}
+                echo "dialect=${config.config['iacpulumi:dialect']}" >> ${env_file}
+                echo "database=${config.config['iacpulumi:database']}" >> ${env_file}
             `,
         });
     });
