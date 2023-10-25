@@ -137,6 +137,14 @@ available.then(available => {
                 cidrBlocks: [config.config['iacpulumi:SSHip']],
             },
         ],
+        egress: [
+            {
+                protocol: config.config['iacpulumi:Protocol'],
+                fromPort: config.config['iacpulumi:MySQL_Port'],
+                toPort: config.config['iacpulumi:MySQL_Port'],
+                cidrBlocks: [config.config['iacpulumi:ipv4']],
+            },
+        ],
         tags: {
             Name: config.config['iacpulumi:SecurityGroup'],
         }
@@ -197,7 +205,7 @@ available.then(available => {
         password: config.config['iacpulumi:password'],
         parameterGroupName: rds_parameter.name,
         dbSubnetGroupName: privateSubnetGroup,
-        vpcSecurityGroupIds: [securityGroupRDS.id, securityGroup.id],
+        vpcSecurityGroupIds: [securityGroupRDS.id],
         publiclyAccessible: config.config['iacpulumi:publiclyAccessible'],
     })
 
@@ -231,7 +239,6 @@ available.then(available => {
             associatePublicIpAddress: config.config['iacpulumi:associatePublicIpAddress'],
             vpcSecurityGroupIds: [
                 securityGroup.id,
-                securityGroupRDS.id,
             ],
             userData: pulumi.interpolate`#!/bin/bash
                 echo "host=${endpoint}" >> ${env_file}
