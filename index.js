@@ -240,6 +240,14 @@ available.then(available => {
             vpcSecurityGroupIds: [
                 securityGroup.id,
             ],
+            ebsBlockDevices: [
+                {
+                    deviceName: config.config['iacpulumi:EC2_DEVICE_NAME'],
+                    deleteOnTermination: config.config['iacpulumi:EC2_DELETE_ON_TERMINATION'],
+                    volumeSize: config.config['iacpulumi:EC2_VOLUME_SIZE'],
+                    volumeType: config.config['iacpulumi:EC2_VOLUME_TYPE']
+                }
+            ],
             userData: pulumi.interpolate`#!/bin/bash
                 echo "host=${endpoint}" >> ${env_file}
                 echo "user=${config.config['iacpulumi:user']}" >> ${env_file}
