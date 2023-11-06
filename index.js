@@ -3,6 +3,14 @@ import * as aws from "@pulumi/aws";
 import yaml from "js-yaml";
 import * as fs from "fs";
 
+// Set up AWS provider
+// const provider = new aws.Provider("aws", {
+//     profile: "dev",
+//     region: "us-east-1",
+//     accessKey: "AKIAV75OPX4QUGQ753NU",
+//     secretKey: "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"
+// });
+
 const stackName = pulumi.getStack();
 const configFile = fs.readFileSync(`pulumi.${stackName}.yaml`, 'utf8');
 const config = yaml.safeLoad(configFile);
@@ -32,7 +40,7 @@ available.then(available => {
     for (let i = 0; i < zoneCount && i < parseInt(config.config['iacpulumi:max_count']); i++) {
         // Create public subnets
         const SubnetPublicCidr = array[0] + "." + array[1] + "." + i + "." + array[3];
-        const pubsubnet = new aws.ec2.Subnet(config.config['iacpulumi:publicSubnet']+ i, {
+        const pubsubnet = new aws.ec2.Subnet(config.config['iacpulumi:publicSubnet'] + i, {
             vpcId: myvpc.id,
             availabilityZone: available.names?.[i],
             cidrBlock: SubnetPublicCidr,
@@ -46,7 +54,7 @@ available.then(available => {
         // Create private subnets
         const ipTotal = i + parseInt(config.config['iacpulumi:max_count']);
         const SubnetPrivateCidr = array[0] + "." + array[1] + "." + ipTotal + "." + array[3];
-        const privsubnet = new aws.ec2.Subnet(config.config['iacpulumi:privateSubnet']+ i , {
+        const privsubnet = new aws.ec2.Subnet(config.config['iacpulumi:privateSubnet'] + i, {
             vpcId: myvpc.id,
             availabilityZone: available.names?.[i],
             cidrBlock: SubnetPrivateCidr,
@@ -75,7 +83,7 @@ available.then(available => {
 
     // Attach all public subnets to the public route table
     publicSubnets.forEach((subnet, index) => {
-        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:publicRoute']+`${index}`, {
+        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:publicRoute'] + `${index}`, {
             routeTableId: pubRouteTable.id,
             subnetId: subnet.id,
         });
@@ -91,7 +99,7 @@ available.then(available => {
 
     // Attach all private subnets to the private route table
     privateSubnets.forEach((subnet, index) => {
-        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:privateRoute']+`${index}`, {
+        const routeTable = new aws.ec2.RouteTableAssociation(config.config['iacpulumi:privateRoute'] + `${index}`, {
             routeTableId: privRouteTable.id,
             subnetId: subnet.id,
         });
@@ -143,6 +151,12 @@ available.then(available => {
                 fromPort: config.config['iacpulumi:MySQL_Port'],
                 toPort: config.config['iacpulumi:MySQL_Port'],
                 cidrBlocks: [config.config['iacpulumi:ipv4']],
+            },
+            {
+                protocol: config.config['iacpulumi:RestrictedProtocol'],
+                fromPort: config.config['iacpulumi:Restricted_Port'],
+                toPort: config.config['iacpulumi:Restricted_Port'],
+                cidrBlocks: [config.config['iacpulumi:destination_cidr']],
             },
         ],
         tags: {
@@ -231,11 +245,36 @@ available.then(available => {
     const env_file = config.config['iacpulumi:envfile'];
 
     RDS_Instance.endpoint.apply(endpoint => {
+        const IAMRole = new aws.iam.Role("IAM", {
+            assumeRolePolicy: JSON.stringify({
+                Version: "2012-10-17",
+                Statement: [
+                    {
+                        Action: "sts:AssumeRole",
+                        Effect: "Allow",
+                        Principal: {
+                            Service: "ec2.amazonaws.com",
+                        },
+                    },
+                ],
+            })
+        })
+
+        const policy = new aws.iam.PolicyAttachment("cloudwatch-agent-policy", {
+            policyArn: "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+            roles: [IAMRole.name],
+        });
+
+        const roleAttachment = new aws.iam.InstanceProfile("my-instance-profile", {
+            role: IAMRole.name,
+        });
+
         const instance = new aws.ec2.Instance(config.config['iacpulumi:instanceTag'], {
             ami: ami.then(i => i.id),
             instanceType: config.config['iacpulumi:instanceType'],
             subnetId: publicSubnets[0],
             keyName: config.config['iacpulumi:keyValue'],
+            iamInstanceProfile: roleAttachment.name,
             associatePublicIpAddress: config.config['iacpulumi:associatePublicIpAddress'],
             vpcSecurityGroupIds: [
                 securityGroup.id,
@@ -255,7 +294,19 @@ available.then(available => {
                 echo "port=${config.config['iacpulumi:port']}" >> ${env_file}
                 echo "dialect=${config.config['iacpulumi:dialect']}" >> ${env_file}
                 echo "database=${config.config['iacpulumi:database']}" >> ${env_file}
+
+                sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/cloudwatch-config.json
+                sudo systemctl restart amazon-cloudwatch-agent
             `,
+        });
+
+        const hostedZone = aws.route53.getZone({ name: "dev.navinsharma.me" });
+        const route53Record = new aws.route53.Record("myRoute53Record", {
+            name: "dev.navinsharma.me",
+            zoneId: hostedZone.then(zone => zone.zoneId),
+            type: "A",
+            records: [instance.publicIp],
+            ttl: 60,
         });
     });
 });
