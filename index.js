@@ -147,12 +147,6 @@ available.then(available => {
         ],
         egress: [
             {
-                protocol: config.config['iacpulumi:Protocol'],
-                fromPort: config.config['iacpulumi:MySQL_Port'],
-                toPort: config.config['iacpulumi:MySQL_Port'],
-                cidrBlocks: [config.config['iacpulumi:ipv4']],
-            },
-            {
                 protocol: config.config['iacpulumi:RestrictedProtocol'],
                 fromPort: config.config['iacpulumi:Restricted_Port'],
                 toPort: config.config['iacpulumi:Restricted_Port'],
@@ -295,7 +289,9 @@ available.then(available => {
                 echo "dialect=${config.config['iacpulumi:dialect']}" >> ${env_file}
                 echo "database=${config.config['iacpulumi:database']}" >> ${env_file}
 
-                sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/cloudwatch-config.json
+                sudo chown -R csye6225 /opt/csye6225
+                sudo chgrp -R csye6225 /opt/csye6225
+                sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/csye6225/webapp/cloudwatch-config.json
                 sudo systemctl restart amazon-cloudwatch-agent
             `,
         });
