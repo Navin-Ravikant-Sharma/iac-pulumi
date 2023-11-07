@@ -3,14 +3,6 @@ import * as aws from "@pulumi/aws";
 import yaml from "js-yaml";
 import * as fs from "fs";
 
-// Set up AWS provider
-// const provider = new aws.Provider("aws", {
-//     profile: "dev",
-//     region: "us-east-1",
-//     accessKey: "AKIAV75OPX4QUGQ753NU",
-//     secretKey: "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"
-// });
-
 const stackName = pulumi.getStack();
 const configFile = fs.readFileSync(`pulumi.${stackName}.yaml`, 'utf8');
 const config = yaml.safeLoad(configFile);
@@ -288,7 +280,6 @@ available.then(available => {
                 echo "port=${config.config['iacpulumi:port']}" >> ${env_file}
                 echo "dialect=${config.config['iacpulumi:dialect']}" >> ${env_file}
                 echo "database=${config.config['iacpulumi:database']}" >> ${env_file}
-
                 sudo chown -R csye6225 /opt/csye6225
                 sudo chgrp -R csye6225 /opt/csye6225
                 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/csye6225/webapp/cloudwatch-config.json
