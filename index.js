@@ -231,27 +231,27 @@ available.then(available => {
     const env_file = config.config['iacpulumi:envfile'];
 
     RDS_Instance.endpoint.apply(endpoint => {
-        const IAMRole = new aws.iam.Role("IAM", {
+        const IAMRole = new aws.iam.Role(config.config['iacpulumi:IAMRoleName'], {
             assumeRolePolicy: JSON.stringify({
-                Version: "2012-10-17",
+                Version: config.config['iacpulumi:IAMVersion'],
                 Statement: [
                     {
-                        Action: "sts:AssumeRole",
-                        Effect: "Allow",
+                        Action: config.config['iacpulumi:Action'],
+                        Effect: config.config['iacpulumi:Effect'],
                         Principal: {
-                            Service: "ec2.amazonaws.com",
+                            Service: config.config['iacpulumi:Service'],
                         },
                     },
                 ],
             })
         })
 
-        const policy = new aws.iam.PolicyAttachment("cloudwatch-agent-policy", {
-            policyArn: "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+        const policy = new aws.iam.PolicyAttachment(config.config['iacpulumi:PolicyAttachmentName'], {
+            policyArn: config.config['iacpulumi:PolicyARN'],
             roles: [IAMRole.name],
         });
 
-        const roleAttachment = new aws.iam.InstanceProfile("my-instance-profile", {
+        const roleAttachment = new aws.iam.InstanceProfile(config.config['iacpulumi:InstanceProfileName'], {
             role: IAMRole.name,
         });
 
@@ -280,6 +280,8 @@ available.then(available => {
                 echo "port=${config.config['iacpulumi:port']}" >> ${env_file}
                 echo "dialect=${config.config['iacpulumi:dialect']}" >> ${env_file}
                 echo "database=${config.config['iacpulumi:database']}" >> ${env_file}
+                echo "statsdPort=${config.config['iacpulumi:satsdport']}" >> ${env_file}
+                echo "statsdhost=${config.config['iacpulumi:statsdhost']}" >> ${env_file}
                 sudo chown -R csye6225 /opt/csye6225
                 sudo chgrp -R csye6225 /opt/csye6225
                 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/csye6225/webapp/cloudwatch-config.json
@@ -287,13 +289,13 @@ available.then(available => {
             `,
         });
 
-        const hostedZone = aws.route53.getZone({ name: "dev.navinsharma.me" });
-        const route53Record = new aws.route53.Record("myRoute53Record", {
-            name: "dev.navinsharma.me",
+        const hostedZone = aws.route53.getZone({ name: config.config['iacpulumi:DomainName'] });
+        const route53Record = new aws.route53.Record(config.config['iacpulumi:Route53'], {
+            name: config.config['iacpulumi:DomainName'],
             zoneId: hostedZone.then(zone => zone.zoneId),
-            type: "A",
+            type: config.config['iacpulumi:Route53Type'],
             records: [instance.publicIp],
-            ttl: 60,
+            ttl: config.config['iacpulumi:TTL'],
         });
     });
 });
