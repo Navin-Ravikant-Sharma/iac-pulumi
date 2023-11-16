@@ -326,6 +326,13 @@ available.then(available => {
             launchTemplate: {
                 id: launchConfig.id,
             },
+            tags: [
+                {
+                    key: config.config['iacpulumi:key'],
+                    value: config.config['iacpulumi:value'],
+                    propagateAtLaunch: config.config['iacpulumi:associatePublicIpAddress'],
+                },
+            ],
         });
 
         const scaleUp = new aws.autoscaling.Policy(config.config['iacpulumi:scaleUpPolicy'], {
