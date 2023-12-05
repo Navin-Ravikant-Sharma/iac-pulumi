@@ -372,6 +372,7 @@ available.then(available => {
         `
 
             let launchConfig = new aws.ec2.LaunchTemplate(config.config['iacpulumi:LaunchTemplateName'], {
+                name: config.config['iacpulumi:LaunchTemplateName'],
                 imageId: ami.then(i => i.id),
                 instanceType: config.config['iacpulumi:instanceType'],
                 keyName: config.config['iacpulumi:keyValue'],
@@ -407,6 +408,7 @@ available.then(available => {
             });
 
             const autoScalingGroup = new aws.autoscaling.Group(config.config['iacpulumi:autoscalingGroup'], {
+                name: config.config['iacpulumi:autoscalingGroup'],
                 vpcZoneIdentifiers: publicSubnets,
                 desiredCapacity: config.config['iacpulumi:desiredCapacity'],
                 targetGroupArns: [targetGroup.arn],
@@ -414,6 +416,7 @@ available.then(available => {
                 maxSize: config.config['iacpulumi:maxSize'],
                 launchTemplate: {
                     id: launchConfig.id,
+                    version: config.config['iacpulumi:version'],
                 },
                 tags: [
                     {
@@ -476,8 +479,10 @@ available.then(available => {
 
             const listener = new aws.lb.Listener(config.config['iacpulumi:Listner'], {
                 loadBalancerArn: loadBalancer.arn,
-                port: config.config['iacpulumi:HTTP_Port'],
-                protocol: config.config['iacpulumi:targetGroupProtocol'],
+                port: config.config['iacpulumi:HTTPS_Port'],
+                protocol: config.config['iacpulumi:listnerProtocol'],
+                sslPolicy: config.config['iacpulumi:sslPolicy'],
+                certificateArn: config.config['iacpulumi:certificateARN'],
                 defaultActions: [{
                     type: config.config['iacpulumi:defaultActionsType'],
                     targetGroupArn: targetGroup.arn,
