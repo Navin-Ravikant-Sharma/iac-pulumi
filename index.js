@@ -112,12 +112,6 @@ available.then(available => {
         ingress: [
             {
                 protocol: config.config['iacpulumi:Protocol'],
-                fromPort: config.config['iacpulumi:HTTP_Port'],
-                toPort: config.config['iacpulumi:HTTP_Port'],
-                cidrBlocks: [config.config['iacpulumi:ipv4']],
-            },
-            {
-                protocol: config.config['iacpulumi:Protocol'],
                 fromPort: config.config['iacpulumi:HTTPS_Port'],
                 toPort: config.config['iacpulumi:HTTPS_Port'],
                 cidrBlocks: [config.config['iacpulumi:ipv4']],
